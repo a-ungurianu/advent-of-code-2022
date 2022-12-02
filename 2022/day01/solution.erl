@@ -7,39 +7,29 @@
 	second/1
 ]).
 
-cal([], _Cur, Prev) ->
-	Prev;
+split_into_lists(Xs) -> split_into_lists(Xs, []).
 
-cal([""|T], Cur, Prev) ->
-	if
-		Cur > Prev ->
-			cal(T, 0, Cur);
-		true ->
-			cal(T, 0, Prev)
-	end;
+split_into_lists([], Acc) -> [Acc];
+split_into_lists([X|Xs], Acc) ->
+	case X of
+		"" -> [Acc|split_into_lists(Xs, [])];
+		_ -> split_into_lists(Xs, [X|Acc])
+	end.
 
-cal([Ln|T], Cur, Prev) ->
-	cal(T, Cur+list_to_integer(Ln), Prev).
+int(L) -> 
+	case string:list_to_integer(L) of
+		{I, []} -> I
+	end.
+
+int_list(Ls) -> lists:map(fun int/1, Ls).
+
+elf_counts(Elf_bags) -> lists:map(fun lists:sum/1, Elf_bags).
+
+parse(Input) -> lists:map(fun int_list/1, split_into_lists(Input)).
+
 
 first(Input) ->
-	cal(Input, 0, 0).
-
-calt([], _Cur, All) ->
-	All;
-
-calt([""|T], Cur, All) ->
-	calt(T, 0, All ++ [Cur]);
-
-calt([Ln|T], Cur, All) ->
-	calt(T, Cur+list_to_integer(Ln), All).
+	lists:max(elf_counts(parse(Input))).
 
 second(Input) ->
-	lists:sum(
-		lists:sublist(
-			lists:reverse(
-				lists:sort(
-					calt(Input, 0, [])
-				)
-			), 1, 3
-		)
-	).
+	lists:sum(lists:sublist(lists:sort(fun(A,B) -> A > B end, elf_counts(parse(Input))), 3)).
