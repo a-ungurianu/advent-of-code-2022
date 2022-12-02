@@ -1,5 +1,5 @@
 -module(solution).
--author("hypothermic").
+-author("a-ungurianu").
 
 %% API
 -export([
