@@ -47,12 +47,20 @@ exec_day({Mode, Year, Day}) ->
 					First = Module:first(Input),
 					Second = Module:second(Input),
 
-					io:format("Day ~B part 1 answer: ~B, part 2 answer: ~B\n", [
-						Day, First, Second
-					]),
-
-					file:write_file(path_to_day_output(Path),
-						integer_to_list(First) ++ "\n" ++ integer_to_list(Second));
+					if 
+						is_list(First) and is_list(Second) ->
+							io:format("Day ~B part 1 answer: ~s, part 2 answer: ~s\n", [
+								Day, First, Second
+							]),
+							file:write_file(path_to_day_output(Path),
+								First ++ "\n" ++ Second);
+						is_number(First) and is_number(Second) ->
+							io:format("Day ~B part 1 answer: ~B, part 2 answer: ~B\n", [
+								Day, First, Second
+							]),
+							file:write_file(path_to_day_output(Path),
+								integer_to_list(First) ++ "\n" ++ integer_to_list(Second))
+					end;
 				{error, Reason} ->
 					io:format("Error: ~w", [Reason]),
 					error
