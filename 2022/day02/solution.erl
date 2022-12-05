@@ -36,9 +36,9 @@ outcome_score(Round) ->
 	{Opp,Me} = Round, 
 	LosingPiece = losing_piece(Opp),
 	if
-		Opp == Me -> 3;
-		Me == LosingPiece -> 0;
-		true -> 6
+		Opp == Me -> 3; % Tie
+		Me == LosingPiece -> 0; % I lose
+		true -> 6 % I wina
 	end.
 
 decode_round1(Round) -> 
@@ -63,13 +63,10 @@ decode_round2(Round) ->
 	{Opp, col_b_to_outcome(Outcome_s)}.
 
 outcome_to_game(G) ->
-	{Opp, Outcome} = G,
-	if
-		Outcome == draw -> {Opp, Opp};
-		true -> case {Opp, Outcome} of
-			{_, lose} -> {Opp, losing_piece(Opp)};
-			{_, win} -> {Opp, winning_piece(Opp)}
-		end
+	case G of
+		{Opp, draw} -> {Opp, Opp};
+		{Opp, lose} -> {Opp, losing_piece(Opp)};
+		{Opp, win} -> {Opp, winning_piece(Opp)}
 	end.
 
 

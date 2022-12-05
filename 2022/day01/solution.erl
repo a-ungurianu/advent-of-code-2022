@@ -10,11 +10,8 @@
 split_into_lists(Xs) -> split_into_lists(Xs, []).
 
 split_into_lists([], Acc) -> [Acc];
-split_into_lists([X|Xs], Acc) ->
-	case X of
-		"" -> [Acc|split_into_lists(Xs, [])];
-		_ -> split_into_lists(Xs, [X|Acc])
-	end.
+split_into_lists([""|Xs], Acc) ->[Acc|split_into_lists(Xs, [])];
+split_into_lists([X|Xs], Acc) ->split_into_lists(Xs, [X|Acc]).
 
 int(L) -> 
 	case string:list_to_integer(L) of

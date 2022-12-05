@@ -9,9 +9,9 @@
 
 split_into_compartements(Line) ->
 	CompartementSize = erlang:length(Line) div 2,
-	lists:split(CompartementSize, Line).
+	tuple_to_list(lists:split(CompartementSize, Line)).
 
-parse1(Input) -> [split_into_compartements(Line) || Line <- Input].
+parse1(Input) -> lists:map(fun split_into_compartements/1, Input).
 
 get_priority(C) -> 
 	if
@@ -20,21 +20,15 @@ get_priority(C) ->
 	end.
 
 find_intersect(Compartements) -> 
-	{Compartement1, Compartement2} = Compartements,
-	C1_Set = sets:from_list(Compartement1),
-	C2_Set = sets:from_list(Compartement2),
-	Both = sets:intersection(C1_Set, C2_Set),
-	lists:last(sets:to_list(Both)).
+	Both = sets:intersection(lists:map(fun sets:from_list/1, Compartements)),
+	hd(sets:to_list(Both)).
 
 first(Input) ->
 	Backpacks = parse1(Input),
 	lists:sum([get_priority(find_intersect(Backpack)) || Backpack <- Backpacks]).
 
-group_in_3s(List) ->
-	case List of
-		[A,B,C] -> [[A,B,C]];
-		[A,B,C|Rest] -> [[A,B,C] | group_in_3s(Rest)]
-	end.
+group_in_3s([]) -> [];
+group_in_3s(Ls) -> {Group, Rest} = lists:split(3, Ls), [Group | group_in_3s(Rest)].
 
 
 second(Input) ->
