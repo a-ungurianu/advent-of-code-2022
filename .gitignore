@@ -19,3 +19,4 @@ rebar3.crashdump
 *~
 out.txt
 .session
+output.txt
