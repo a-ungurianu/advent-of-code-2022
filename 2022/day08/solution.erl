@@ -9,13 +9,13 @@
 
 parse_row(Line, RowIdx) -> parse_row(Line, RowIdx, 0).
 
-parse_row([], _RowIdx, _ColIdx) -> [];
-parse_row([Val| Rest], RowIdx, ColIdx) -> [{{RowIdx, ColIdx}, Val - $0} | parse_row(Rest, RowIdx, ColIdx + 1)].
+parse_row([], _RowIdx, _ColIdx) -> #{};
+parse_row([Val| Rest], RowIdx, ColIdx) -> D = parse_row(Rest, RowIdx, ColIdx + 1), D#{ {RowIdx, ColIdx} => (Val - $0)}.
 
 parse(Input) -> parse(Input, 0).
 
-parse([], _RowIdx) -> [];
-parse([Line | Rest], RowIdx) -> parse(Rest, RowIdx + 1) ++ parse_row(Line, RowIdx).
+parse([], _RowIdx) -> #{};
+parse([Line | Rest], RowIdx) -> maps:merge(parse(Rest, RowIdx + 1), parse_row(Line, RowIdx)).
 
 rows(Trees) -> rows(Trees, 0).
 rows(Trees, RowIdx) -> 
@@ -45,7 +45,7 @@ find_visible([{Coord, Height}| Rest], LastHeight) ->
 
 first(Input) ->
 	Trees = parse(Input),
-	Rows = rows(Trees), Cols = cols(Trees),
+	Rows = rows(maps:to_list(Trees)), Cols = cols(maps:to_list(Trees)),
 	RowVisible = sets:union([sets:from_list(find_visible(Row)) || Row <- Rows]),
 	RowReversedVisible = sets:union([sets:from_list(find_visible(lists:reverse(Row))) || Row <- Rows]),
 	ColVisible = sets:union([sets:from_list(find_visible(Col)) || Col <- Cols]),
@@ -53,5 +53,25 @@ first(Input) ->
 	VisibleTrees = sets:union([RowVisible, RowReversedVisible, ColVisible, ColReversedVisible]),
 	sets:size(VisibleTrees).
 
+up({R,C}) -> {R - 1, C}.
+down({R,C}) -> {R + 1, C}.
+left({R,C}) -> {R, C - 1}.
+right({R,C}) -> {R, C + 1}.
+score_dir(Pos, Height, Trees, Move) -> 
+	case Trees of 
+		#{Pos := H} -> if 
+				H < Height -> score_dir(Move(Pos), Height, Trees, Move) + 1;
+				true -> 1
+			end;
+		#{} -> 0
+	end. 
+
+score(Pos, Height, Trees) ->
+	Moves = [fun up/1, fun down/1, fun left/1, fun right/1],
+	Scores = lists:map(fun (Dir) -> score_dir(Dir(Pos), Height, Trees, Dir) end, Moves),
+	lists:foldl(fun (S, Acc) -> Acc * S end, 1, Scores).
+
+
 second(Input) ->
-	0.
+	Trees = parse(Input),
+	lists:max(maps:values(maps:map(fun (Pos, Height) -> score(Pos, Height, Trees) end, Trees))).
