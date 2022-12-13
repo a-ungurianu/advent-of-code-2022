@@ -40,11 +40,6 @@ parse_move(Line) ->
 
 parse(Input) -> lists:map(fun parse_move/1, Input).
 
-move({R,C}, up) -> {R-1, C};
-move({R,C}, down) -> {R+1, C};
-move({R,C}, left) -> {R, C-1};
-move({R,C}, right) -> {R, C+1}.
-
 adjust_rope_segment({R1, C1}=Pos, {R2, C2}=InFront) ->
 	CDist = max(abs(R1-R2), abs(C1-C2)),
 	if
@@ -53,20 +48,20 @@ adjust_rope_segment({R1, C1}=Pos, {R2, C2}=InFront) ->
 	end.
 adjust_rope_segment({R, PC}=Pos, {R,FC}, true) -> 
 	if
-		PC > FC -> move(Pos, left);
-		PC < FC -> move(Pos, right)
+		PC > FC -> map_utils:move(left, Pos);
+		PC < FC -> map_utils:move(right, Pos)
 	end;
 adjust_rope_segment({PR, C}=Pos, {FR,C}, true) -> 
 	if
-		PR > FR -> move(Pos, up);
-		PR < FR -> move(Pos, down)
+		PR > FR -> map_utils:move(up, Pos);
+		PR < FR -> map_utils:move(down, Pos)
 	end;
 adjust_rope_segment({PR, PC}=Pos, {FR,FC}, true) -> 
 	if
-		PR > FR, PC > FC -> move(move(Pos, up), left);
-		PR > FR, PC < FC -> move(move(Pos, up), right);
-		PR < FR, PC > FC -> move(move(Pos, down), left);
-		PR < FR, PC < FC -> move(move(Pos, down), right)
+		PR > FR, PC > FC -> map_utils:move(left, map_utils:move(up, Pos));
+		PR > FR, PC < FC -> map_utils:move(right, map_utils:move(up, Pos));
+		PR < FR, PC > FC -> map_utils:move(left, map_utils:move(down, Pos));
+		PR < FR, PC < FC -> map_utils:move(right, map_utils:move(down, Pos))
 	end.
 	
 adjust_rope([Last]) -> [Last];
@@ -77,7 +72,7 @@ adjust_rope([Lead, Follow | Rest]) ->
 
 apply_move(Dir, Rope, TailTouched) ->
 	[Head | Rest] = Rope,
-	MovedHead = move(Head, Dir),
+	MovedHead = map_utils:move(Dir, Head),
 	NewRope = adjust_rope([MovedHead| Rest]),
 	NTailTouched = sets:add_element(lists:last(NewRope), TailTouched),
 	{NewRope, NTailTouched}.

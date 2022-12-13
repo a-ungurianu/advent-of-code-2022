@@ -7,15 +7,7 @@
 	second/1
 ]).
 
-parse_row(Line, RowIdx) -> parse_row(Line, RowIdx, 0).
-
-parse_row([], _RowIdx, _ColIdx) -> #{};
-parse_row([Val| Rest], RowIdx, ColIdx) -> D = parse_row(Rest, RowIdx, ColIdx + 1), D#{ {RowIdx, ColIdx} => (Val - $0)}.
-
-parse(Input) -> parse(Input, 0).
-
-parse([], _RowIdx) -> #{};
-parse([Line | Rest], RowIdx) -> maps:merge(parse(Rest, RowIdx + 1), parse_row(Line, RowIdx)).
+parse(Input) -> maps:map(fun (_, V) -> V - $0 end, map_utils:parse_into_map(Input)).
 
 rows(Trees) -> rows(Trees, 0).
 rows(Trees, RowIdx) -> 
@@ -53,10 +45,6 @@ first(Input) ->
 	VisibleTrees = sets:union([RowVisible, RowReversedVisible, ColVisible, ColReversedVisible]),
 	sets:size(VisibleTrees).
 
-up({R,C}) -> {R - 1, C}.
-down({R,C}) -> {R + 1, C}.
-left({R,C}) -> {R, C - 1}.
-right({R,C}) -> {R, C + 1}.
 score_dir(Pos, Height, Trees, Move) -> 
 	case Trees of 
 		#{Pos := H} -> if 
@@ -67,7 +55,7 @@ score_dir(Pos, Height, Trees, Move) ->
 	end. 
 
 score(Pos, Height, Trees) ->
-	Moves = [fun up/1, fun down/1, fun left/1, fun right/1],
+	Moves = [fun map_utils:up/1, fun map_utils:down/1, fun map_utils:left/1, fun map_utils:right/1],
 	Scores = lists:map(fun (Dir) -> score_dir(Dir(Pos), Height, Trees, Dir) end, Moves),
 	lists:foldl(fun (S, Acc) -> Acc * S end, 1, Scores).
 
