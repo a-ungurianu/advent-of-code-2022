@@ -7,7 +7,8 @@
     left/1,
     right/1,
     move/2,
-    parse_into_map/1
+    parse_into_map/1,
+    map_to_string/3
 ]).
 
 
@@ -31,4 +32,15 @@ parse_into_map(Lines) -> parse_into_map(Lines, 0).
 parse_into_map([], _RowIdx) -> #{};
 parse_into_map([Line | Rest], RowIdx) -> maps:merge(parse_into_map(Rest, RowIdx + 1), parse_row(Line, RowIdx)). 
 
--define(DIRS, [fun up/1,fun down/1,fun left/1,fun right/1]).
+get_pos_c(PointsMap, Pos) ->
+    case PointsMap of
+		#{Pos := V} -> V;
+		#{} -> "."
+	end.
+
+map_to_string(PointsMap, _, BottomRight, BottomRight) -> get_pos_c(PointsMap, BottomRight);
+map_to_string(PointsMap, {TL_X, _}=TopLeft, {BR_X, _}= BottomRight, {BR_X, P_Y}=Pos) -> 
+    get_pos_c(PointsMap, Pos) ++ "\n" ++ map_to_string(PointsMap, TopLeft, BottomRight,{TL_X, P_Y + 1});
+map_to_string(PointsMap, TopLeft, BottomRight, {X,Y} = Pos) ->
+    get_pos_c(PointsMap, Pos) ++ map_to_string(PointsMap, TopLeft, BottomRight, {X + 1, Y}).
+map_to_string(PointsMap, TopLeft, BottomRight) -> map_to_string(PointsMap, TopLeft, BottomRight, TopLeft).

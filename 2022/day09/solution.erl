@@ -7,16 +7,6 @@
 	second/1
 ]).
 
-points_to_map(PointsMap, Size, Size, Size) -> string:pad(integer_to_list(Size), 2, leading) ++ "\n";
-points_to_map(PointsMap, Size, Row, Size) -> string:pad(integer_to_list(Row), 2, leading) ++ "\n" ++ points_to_map(PointsMap, Size, Row + 1, -Size);
-points_to_map(PointsMap, Size, Row, Col) ->
-	case PointsMap of
-		#{{Row, Col} := V} -> V;
-		#{} -> "."
-	end ++ points_to_map(PointsMap, Size, Row, Col + 1).
-points_to_map(PointsMap, Size) -> points_to_map(PointsMap, Size, -Size, -Size).
-
-
 rope_to_point_map(Rope) -> rope_to_point_map(Rope, 0).
 rope_to_point_map([], _) -> #{};
 rope_to_point_map([Tip|Rest], Idx) -> 
@@ -26,7 +16,7 @@ rope_to_point_map([Tip|Rest], Idx) ->
 	}.
 
 print_rope(Rope, Size)->
-	points_to_map(rope_to_point_map(Rope), Size).
+	map_utils:map_to_string(rope_to_point_map(Rope), {-Size, -Size},{Size, Size}).
 
 parse_move(Line) -> 
 	[DirS, AmountS] = string:split(Line, " "),
