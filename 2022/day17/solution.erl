@@ -92,25 +92,36 @@ board_to_point_map(Elements, Piece) ->
 	maps:merge(maps:from_keys(lists:map(fun ({X,Y}) -> {X, -Y} end, sets:to_list(Elements)), "#"), maps:from_keys(lists:map(fun ({X,Y}) -> {X, -Y} end, Piece), "@")).
 
 board_to_string(Elements, Piece, MaxHeight) ->
-	map_utils:map_to_string(board_to_point_map(Elements, Piece), {0,-MaxHeight-7}, {6,0}).
+	map_utils:map_to_string(board_to_point_map(Elements, Piece), {0,-MaxHeight-1}, {6,-MaxHeight + 40}).
 
 drop_rock(Piece, JetsCycler, Elements, MaxHeight) ->
 	OffSet = {2, MaxHeight + 4},
 	PlacedPiece = move_piece(Piece, OffSet),
-	% io:format("Drop\n~s\n", [board_to_string(Elements, PlacedPiece, MaxHeight)]),
 	{NextJetsCycler, FinalPiecePos} = step_rock(PlacedPiece, JetsCycler, Elements),
 	{NextJetsCycler, sets:union(sets:from_list(FinalPiecePos), Elements), find_max_y(FinalPiecePos)}.
 
-drop_rocks(_, _, 0, Elements, MaxHeight) -> {Elements, MaxHeight};
-drop_rocks(PieceCycler, JetsCycler, Count, Elements, MaxHeight) -> 
-	{Piece, NextPieceCycler} = next_cycle(PieceCycler),
-	{NextJetsCycler, NewElements, NewMaxHeight} = drop_rock(Piece, JetsCycler, Elements, MaxHeight),
-	drop_rocks(NextPieceCycler, NextJetsCycler, Count - 1, NewElements, max(NewMaxHeight, MaxHeight)).
+drop_rocks(_, _, 0, Elements, MaxHeight, _) -> {Elements, MaxHeight};
+drop_rocks({P, _}=PieceCycler, {J,_}=JetsCycler, Count, Elements, MaxHeight, PrevConfigurations) ->
+	CurrentBoardView = board_to_string(Elements, [], MaxHeight),
+	CycleKey = {length(P), length(J), CurrentBoardView},
+	case PrevConfigurations of
+		#{CycleKey := {CachedCount, CachedMaxHeight}} -> 
+			CycleSize = CachedCount - Count,
+			CycleHeightAdd = MaxHeight - CachedMaxHeight,
+			CyclesRemaining = Count div CycleSize,
+			RemainingFromCycle = Count rem CycleSize,
+			io:format("Found match @ ~w <- ~w : cycle size=~w, height_diff=~w, cyclesRemaining=~w\n", [Count, CachedCount, CycleSize, CycleHeightAdd, CyclesRemaining]),
+			drop_rocks(PieceCycler, JetsCycler, RemainingFromCycle, sets:from_list(move_piece(sets:to_list(Elements), {0, CycleHeightAdd * CyclesRemaining})), MaxHeight + CycleHeightAdd * CyclesRemaining, #{});
+		#{} -> 
+			{Piece, NextPieceCycler} = next_cycle(PieceCycler),
+			{NextJetsCycler, NewElements, NewMaxHeight} = drop_rock(Piece, JetsCycler, Elements, MaxHeight),
+			drop_rocks(NextPieceCycler, NextJetsCycler, Count - 1, NewElements, max(NewMaxHeight, MaxHeight), PrevConfigurations#{CycleKey => {Count, MaxHeight}})
+	end.
 
 drop_rocks(Jets, Count) -> 
 	PieceCycler = cycler([?DASH_PIECE, ?CROSS_PIECE, ?L_PIECE, ?TALL_PIECE, ?SQUARE_PIECE]),
 	JetsCycler = cycler(Jets),
-	drop_rocks(PieceCycler, JetsCycler, Count, sets:new(), 0).
+	drop_rocks(PieceCycler, JetsCycler, Count, sets:new(), 0, #{}).
 
 first(Input) ->
 	Jets = parse(Input),
@@ -118,4 +129,6 @@ first(Input) ->
 	MaxHeight.
 
 second(Input) ->
-	0.
+	Jets = parse(Input),
+	{_, MaxHeight} = drop_rocks(Jets, 1000000000000),
+	MaxHeight.
